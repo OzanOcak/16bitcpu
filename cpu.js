@@ -3,6 +3,7 @@ const instructions = require("./instructions");
 
 class CPU {
   constructor(memory) {
+    // inject the created array as a memory object
     this.memory = memory;
 
     this.registerNames = [
@@ -16,14 +17,14 @@ class CPU {
       "r6",
       "r7",
       "r8",
-    ];
+    ]; // name registers within registerNames array so we can fetch and process them
 
     this.registers = createMemory(this.registerNames.length * 2);
 
     this.registerMap = this.registerNames.reduce((map, name, i) => {
       map[name] = i * 2;
       return map;
-    }, {});
+    }, {}); // give all the registers 16 bits space
   }
 
   debug() {
@@ -50,16 +51,16 @@ class CPU {
   }
 
   fetch() {
-    const nextInstructionAddress = this.getRegister("ip");
-    const instruction = this.memory.getUint8(nextInstructionAddress);
-    this.setRegister("ip", nextInstructionAddress + 1);
+    const nextInstructionAddress = this.getRegister("ip"); //  get register addr assign ip
+    const instruction = this.memory.getUint8(nextInstructionAddress); // get the value
+    this.setRegister("ip", nextInstructionAddress + 1); // inc ip 1
     return instruction;
   }
 
   fetch16() {
-    const nextInstructionAddress = this.getRegister("ip");
-    const instruction = this.memory.getUint16(nextInstructionAddress);
-    this.setRegister("ip", nextInstructionAddress + 2);
+    const nextInstructionAddress = this.getRegister("ip"); //  get register addr assign ip
+    const instruction = this.memory.getUint16(nextInstructionAddress); // get the value
+    this.setRegister("ip", nextInstructionAddress + 2); // inc ip 2
     return instruction;
   }
 
