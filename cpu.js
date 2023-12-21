@@ -28,8 +28,8 @@ class CPU {
       return map;
     }, {}); // give all the registers 16 bits space
 
-    this.setRegister("sp", memory.byteLength - 1 - 1); // start from top of memory
-    this.setRegister("fp", memory.byteLength - 1 - 1); // also start from bottom of memory
+    this.setRegister("sp", 0xffff - 1); // start from top of memory
+    this.setRegister("fp", 0xffff - 1); // also start from bottom of memory
 
     this.stackFrameSize = 0; // fram size is subroutine size
   }
@@ -146,15 +146,15 @@ class CPU {
       // Move literal into register
       case instructions.MOV_LIT_REG: {
         const literal = this.fetch16();
-        const register = (this.fetch() % this.registerNames.length) * 2;
+        const register = this.fetchRegisterIndex();
         this.registers.setUint16(register, literal);
         return;
       }
 
       // Move register to register
       case instructions.MOV_REG_REG: {
-        const registerFrom = (this.fetch() % this.registerNames.length) * 2;
-        const registerTo = (this.fetch() % this.registerNames.length) * 2;
+        const registerFrom = this.fetchRegisterIndex();
+        const registerTo = this.fetchRegisterIndex();
         const value = this.registers.getUint16(registerFrom);
         this.registers.setUint16(registerTo, value);
         return;
@@ -162,7 +162,7 @@ class CPU {
 
       // Move register to memory
       case instructions.MOV_REG_MEM: {
-        const registerFrom = (this.fetch() % this.registerNames.length) * 2;
+        const registerFrom = this.fetchRegisterIndex();
         const address = this.fetch16();
         const value = this.registers.getUint16(registerFrom);
         this.memory.setUint16(address, value);
@@ -172,7 +172,7 @@ class CPU {
       // Move memory to register
       case instructions.MOV_MEM_REG: {
         const address = this.fetch16();
-        const registerTo = (this.fetch() % this.registerNames.length) * 2;
+        const registerTo = this.fetchRegisterIndex();
         const value = this.memory.getUint16(address);
         this.registers.setUint16(registerTo, value);
         return;
@@ -180,10 +180,10 @@ class CPU {
 
       // Add register to register
       case instructions.ADD_REG_REG: {
-        const r1 = this.fetch();
-        const r2 = this.fetch();
-        const registerValue1 = this.registers.getUint16(r1 * 2);
-        const registerValue2 = this.registers.getUint16(r2 * 2);
+        const r1 = this.fetchRegisterIndex();
+        const r2 = this.fetchRegisterIndex();
+        const registerValue1 = this.registers.getUint16(r1);
+        const registerValue2 = this.registers.getUint16(r2);
         this.setRegister("acc", registerValue1 + registerValue2);
         return;
       }
@@ -244,12 +244,22 @@ class CPU {
         this.popState();
         return;
       }
+      // Halt all computation
+      case instructions.HLT: {
+        return true;
+      }
     }
   }
 
   step() {
     const instruction = this.fetch();
     return this.execute(instruction);
+  }
+  run() {
+    const halt = this.step();
+    if (!halt) {
+      setImmediate(() => this.run());
+    }
   }
 }
 
